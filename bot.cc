@@ -97,21 +97,10 @@ void IRCRobot::HandleHandshake(const boost::system::error_code& error) {
       s.append(nick_);
       SendLine(s);
     }
-    EstablishReadCallback();
+    line_reader_.Start();
   } else {
     LOG(FATAL) << "Handshake failed: " << error;
   }
-}
-
-void IRCRobot::EstablishReadCallback() {
-  boost::asio::async_read(socket_,
-                          boost::asio::buffer(reply_, MAX_LENGTH),
-                          boost::bind(&IRCRobot::ReadCompletedTest, this,
-                                      boost::asio::placeholders::error,
-                                      boost::asio::placeholders::bytes_transferred),
-                          boost::bind(&IRCRobot::HandleRead, this,
-                                      boost::asio::placeholders::error,
-                                      boost::asio::placeholders::bytes_transferred));
 }
 
 void IRCRobot::SendLine(const std::string &msg) {
@@ -123,48 +112,6 @@ void IRCRobot::SendLine(const std::string &msg) {
                            boost::bind(&IRCRobot::HandleWrite, this,
                                        boost::asio::placeholders::error,
                                        boost::asio::placeholders::bytes_transferred));
-}
-
-bool IRCRobot::ReadCompletedTest(const boost::system::error_code& error,
-                                 size_t bytes_transferred) {
-  if (error) {
-    LOG(FATAL) << "read error: " << error;
-    return true;
-  }
-  if (bytes_transferred == MAX_LENGTH) {
-    reply_[MAX_LENGTH - 1] = '\n';
-    return true;
-  } else if (bytes_transferred == 0) {
-    return false;
-  }
-  return memrchr(reply_, '\n', bytes_transferred) != NULL;
-}
-
-void IRCRobot::HandleRead(const boost::system::error_code& error,
-                          size_t bytes_transferred) {
-  if (error) {
-    LOG(FATAL) << "read error: " << error;
-    exit(1);
-  }
-
-  bool keep_going = true;
-  size_t pos = 0;
-  std::string line;
-  std::string reply(reply_, bytes_transferred);
-  while (keep_going) {
-    size_t next = reply.find('\n', pos);
-    if (next == std::string::npos) {
-      line = reply.substr(pos, next);
-      keep_going = false;
-    } else {
-      line = reply.substr(pos, next - pos);
-      pos = next + 1;
-    }
-
-    LineCallback(line);
-
-  }
-  EstablishReadCallback();
 }
 
 void IRCRobot::LineCallback(const std::string &line) {

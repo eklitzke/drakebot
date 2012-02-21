@@ -60,7 +60,7 @@ void LineReader<AsyncReadStream>::Start() {
 
 template<typename AsyncReadStream>
 void LineReader<AsyncReadStream>::EstablishReadHandler() {
-  boost::asio::async_read(stream_,
+  boost::asio::async_read(*stream_,
                           boost::asio::buffer(read_buf_, READ_BUF_SIZE),
                           boost::bind(&LineReader<AsyncReadStream>::ReadCompletedTest, this,
                                       boost::asio::placeholders::error,
@@ -112,7 +112,7 @@ bool LineReader<AsyncReadStream>::HandleRead(
     }
     std::string line = data.substr(offset, next - offset);
     callback_(line);
-    next = offset + 1;
+    offset = next + 1;
     if (next >= data.size()) {
       extra_.clear();
       break;

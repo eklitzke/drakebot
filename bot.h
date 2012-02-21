@@ -67,12 +67,9 @@ class IRCRobot {
   void HandleConnect(const boost::system::error_code&, tcp::resolver::iterator);
   void HandleHandshake(const boost::system::error_code&);
   void HandleWrite(const boost::system::error_code&, size_t);
-  void HandleRead(const boost::system::error_code&, size_t);
   void HandleTimeout(const boost::system::error_code&);
 
-  bool ReadCompletedTest(const boost::system::error_code&, size_t);
   void SendLine(const std::string &);
-  void EstablishReadCallback();
   unsigned int PickWaitTime();
   bool SendMessage(const std::string &);
   bool SendQuotation();

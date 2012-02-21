@@ -22,7 +22,6 @@
       ],
       'sources': [
 	    'bot.cc',
-		#'line_reader.cc',
 		'main.cc'
       ]
     },
