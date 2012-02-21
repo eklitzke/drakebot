@@ -196,7 +196,7 @@ void IRCRobot::HandleWrite(const boost::system::error_code& error,
       break;
     case SEND_USER:
       state_ = SEND_JOIN;
-      SendLine("JOIN #drake");
+      JoinChannels();
       break;
     case SEND_JOIN:
       state_ = SEND_QUOTATIONS;
@@ -293,19 +293,18 @@ std::string IRCRobot::GetQuotation() {
   return chosen;
 }
 
+void IRCRobot::JoinChannels() {
+  std::vector<std::string>::iterator it;
+  for (it = channels_.begin(); it != channels_.end(); ++it) {
+    std::string s = "JOIN ";
+    s.append(*it);
+    SendLine(s);
+  }
+}
+
 unsigned int IRCRobot::PickWaitTime() {
   double davg = static_cast<double>(interval_);
   return static_cast<unsigned int>(davg * (0.5 + rand_()));
 }
-
-/*
-double NextAnnouncement(double mu, double sigma) {
-  return 1.0;
-}
-
-std::string GetQuotation(const std::string &quotations_file) {
-  return "test";
-}
-*/
 }
 

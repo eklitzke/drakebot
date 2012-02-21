@@ -72,6 +72,7 @@ class IRCRobot {
   unsigned int PickWaitTime();
   bool SendMessage(const std::string &);
   bool SendQuotation();
+  void JoinChannels();
 
   void LineCallback(const std::string &);
 
