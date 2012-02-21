@@ -8,17 +8,19 @@
 #include <boost/asio/ssl.hpp>
 #include <boost/function.hpp>
 
+#include <gflags/gflags.h>
 #include <glog/logging.h>
 
 #include <string>
+
+//DEFINE_int32(read_buffer_size, 8096, "Size of the internal read buffer");
+const int FLAGS_read_buffer_size = 8096;
 
 typedef boost::asio::ssl::stream<boost::asio::ip::tcp::socket> ssl_socket;
 typedef boost::function<void (const std::string &)> callback;
 using boost::asio::ip::tcp;
 
 namespace drakebot {
-
-enum { READ_BUF_SIZE = 8096 };
 
 template<typename AsyncReadStream>
 class LineReader {
@@ -44,7 +46,7 @@ class LineReader {
 template<typename AsyncReadStream>
 LineReader<AsyncReadStream>::LineReader(AsyncReadStream *stream, callback cb)
     :stream_(stream), callback_(cb), keep_going_(false) {
-  read_buf_ = new char[READ_BUF_SIZE];
+  read_buf_ = new char[FLAGS_read_buffer_size];
 }
 
 template<typename AsyncReadStream>
@@ -61,7 +63,7 @@ void LineReader<AsyncReadStream>::Start() {
 template<typename AsyncReadStream>
 void LineReader<AsyncReadStream>::EstablishReadHandler() {
   boost::asio::async_read(*stream_,
-                          boost::asio::buffer(read_buf_, READ_BUF_SIZE),
+                          boost::asio::buffer(read_buf_, FLAGS_read_buffer_size),
                           boost::bind(
                               &LineReader<AsyncReadStream>::ReadCompletedTest,
                               this, boost::asio::placeholders::error,
@@ -86,7 +88,7 @@ bool LineReader<AsyncReadStream>::ReadCompletedTest(
 
   void *offset = memrchr(read_buf_, '\n', bytes_transferred);
   if (offset == NULL) {
-    if (bytes_transferred == READ_BUF_SIZE) {
+    if (bytes_transferred == FLAGS_read_buffer_size) {
       LOG(FATAL) << "failed to buffer enough bytes";
       return true;
     }

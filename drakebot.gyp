@@ -10,9 +10,9 @@
             '-pthread',
           ],
           'libraries': [
-		    '-lboost_system',
-		    '-lboost_program_options',
-		    '-lcrypto',
+            '-lboost_system',
+            '-lcrypto',
+            '-lgflags',
             '-lglog',
             '-lssl',
           ]
@@ -21,8 +21,8 @@
         'DEFINE_DEBUG',
       ],
       'sources': [
-	    'bot.cc',
-		'main.cc'
+        'bot.cc',
+        'main.cc'
       ]
     },
   ]

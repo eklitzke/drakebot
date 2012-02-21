@@ -1,80 +1,50 @@
 // -*- C++ -*-
 // Copyright 2012, Evan Klitzke <evan@eklitzke.org>
 
+#include <stdio.h>
 #include <syslog.h>
 
-#include <boost/program_options.hpp>
 #include <boost/asio/ssl.hpp>
 
+#include <gflags/gflags.h>
 #include <glog/logging.h>
 
 #include <fstream>
-#include <iostream>
 #include <string>
 #include <vector>
 
 #include "./bot.h"
-
-namespace po = boost::program_options;
+#include "./line_reader.h"
 
 using boost::asio::ip::resolver_query_base;
 using boost::asio::ssl::context;
 
+DEFINE_bool(daemon, true, "Run as a daemon");
+DEFINE_string(host, "irc.freenode.net", "Host to connect to");
+DEFINE_int32(port, 6697, "Port to connect to");
+DEFINE_string(password, "", "Password to use");
+DEFINE_string(nick, "drakebot", "Nick to use");
+DEFINE_string(channel, "", "Channel to connect to");
+DEFINE_bool(ssl, true, "Use SSL");
+DEFINE_string(quotations, "quotations.txt", "Quotations file to use");
+DEFINE_int32(interval, 43200, "Mean interval to use");
+
 int main(int argc, char **argv) {
+  google::ParseCommandLineFlags(&argc, &argv, true);
   google::InitGoogleLogging(argv[0]);
 
-  int port;
-  unsigned int interval;
-  bool use_ssl = false;
-  std::string host;
-  std::string nick;
-  std::string password;
-  std::string quotations_file;
-  std::vector<std::string> channels;
-  po::options_description desc("Allowed options");
-  desc.add_options()
-      ("help,h", "Produce this help message.")
-      ("daemon,d", "Run as a daemon")
-      ("host,H", po::value<std::string>(&host)->
-       default_value("irc.freenode.net"), "The host to connect to.")
-      ("port,p", po::value<int>(&port)->default_value(6667),
-       "The port to connect on.")
-      ("password", po::value<std::string>(&password)->default_value(""),
-       "The password to use (optional)")
-      ("nick,n", po::value<std::string>(&nick)->default_value("drakebot"),
-       "The nick to use.")
-      ("channels,c", po::value<std::vector<std::string> >(), "Channels to join")
-      ("ssl,s", "Use SSL when connecting.")
-      ("quotations,q", po::value<std::string>(&quotations_file)->
-       default_value("quotations.txt"), "The path to the quotations file")
-      ("interval,i", po::value<unsigned int>(&interval)->default_value(28800),
-       "The average amount of time to wait between sending quotations");
-
-  po::variables_map vm;
-  po::store(po::parse_command_line(argc, argv, desc), vm);
-  po::notify(vm);
-
-  if (vm.count("help")) {
-    std::cout << desc << std::endl;
+  if (!FLAGS_channel.size()) {
+    printf("Must specify a channel with --channel\n");
     return 1;
   }
-  if (!vm.count("channels")) {
-    std::cout << "Must specify one or more channels with -c/--channels"
-              << std::endl;
+  if (!FLAGS_ssl) {
+    printf("Sorry, right now only --ssl is supported\n");
     return 1;
-  }
-  if (!vm.count("ssl")) {
-    // FIXME
-    std::cout << "Sorry, right now only SSL mode is supported!" << std::endl;
-    return 1;
-  }
-  if (vm.count("ssl")) {
-    use_ssl = true;
   }
 
   boost::asio::io_service io_service;
 
-  if (vm.count("daemon")) {
+  if (FLAGS_daemon) {
     if (pid_t pid = fork()) {
       if (pid > 0) {
         // We're in the parent process and need to exit.
@@ -107,34 +77,29 @@ int main(int argc, char **argv) {
     io_service.notify_fork(boost::asio::io_service::fork_child);
   }
 
-  channels = vm["channels"].as<std::vector<std::string> >();
-
   drakebot::InitializeRNG();
 
   // initiate the name resolution
   std::stringstream numeric_port;
-  numeric_port << port;
+  numeric_port << FLAGS_port;
   boost::asio::ip::tcp::resolver resolver(io_service);
   boost::asio::ip::tcp::resolver::query query(
-      host, numeric_port.str(), resolver_query_base::numeric_service);
+      FLAGS_host, numeric_port.str(), resolver_query_base::numeric_service);
   boost::asio::ip::tcp::resolver::iterator iterator = resolver.resolve(query);
 
   // set the SSL context
   context ctx(boost::asio::ssl::context::sslv23);
   ctx.set_default_verify_paths();
 
-  drakebot::IRCRobot robot(io_service, ctx, quotations_file, interval, nick,
-                           password);
+  drakebot::IRCRobot robot(io_service, ctx, FLAGS_quotations, FLAGS_interval, FLAGS_nick,
+                           FLAGS_password);
 
   std::vector<std::string>::iterator it;
-  for (it = channels.begin(); it != channels.end(); ++it) {
-    std::string channel = *it;
-    if (!channel.size())
-      continue;
-    if (channel[0] != '#')
-      channel.insert(0, "#");
-    robot.AddChannel(channel);
+  std::string channel_name = FLAGS_channel;
+  if (channel_name[0] != '#') {
+    channel_name.insert(0, "#");
   }
+  robot.AddChannel(channel_name);
 
   robot.Connect(iterator);
   io_service.run();
