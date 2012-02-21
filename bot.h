@@ -12,6 +12,8 @@
 #include <boost/bind.hpp>
 #include <boost/random.hpp>
 
+#include "./line_reader.h"
+
 typedef boost::asio::ssl::stream<boost::asio::ip::tcp::socket> ssl_socket;
 using boost::asio::ip::tcp;
 
@@ -50,6 +52,8 @@ class IRCRobot {
   const unsigned int interval_;
   boost::asio::io_service &io_service_;
   boost::asio::deadline_timer timer_;
+
+  LineReader<ssl_socket> line_reader_;
 
   bool waiting_;
   ssl_socket socket_;
