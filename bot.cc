@@ -47,8 +47,8 @@ IRCRobot::IRCRobot(boost::asio::io_service &service,
 }
 
 IRCRobot::~IRCRobot() {
-  delete reply_;
   delete request_;
+  delete reply_;
 }
 
 void IRCRobot::Connect(boost::asio::ip::tcp::resolver::iterator

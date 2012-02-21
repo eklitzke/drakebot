@@ -1,4 +1,8 @@
 drakebot
 drakebot_opt
 quotations.txt
+Makefile
+out/
+*.Makefile
+*.mk
 *.o
