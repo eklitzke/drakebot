@@ -1,20 +1,23 @@
 CC := g++
-CFLAGS := -g -Os
-LDFLAGS := -lboost_system -lboost_program_options -lpthread -lssl -lcrypto
+CFLAGS := -Os
+LDFLAGS := -lboost_system -lboost_program_options -lpthread -lssl -lcrypto -lglog
 
 .PHONY: all
 all: drakebot
 
 bot.o: bot.cc bot.h
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) -g $(CFLAGS) -c $< -o $@
 
 drakebot: bot.o main.cc
-	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@
+	$(CC) -g $(CFLAGS) $(LDFLAGS) $^ -o $@
 
-.PHONY: tiny
-tiny: drakebot
-	strip -s $<
+bot_opt.o: bot.cc bot.h
+	$(CC) -DNDEBUG $(CFLAGS) -c $< -o $@
+
+drakebot_opt: bot_opt.o main.cc
+	$(CC) -DNDEBUG $(CFLAGS) $(LDFLAGS) $^ -o $@
+	strip -s $@
 
 .PHONY: clean
 clean:
-	rm -f drakebot *.o
+	rm -f drakebot drakebot_opt *.o

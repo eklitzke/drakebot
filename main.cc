@@ -4,7 +4,12 @@
 #include <syslog.h>
 
 #include <boost/program_options.hpp>
+#include <boost/asio/ssl.hpp>
 
+#include <glog/logging.h>
+
+#include <fstream>
+#include <iostream>
 #include <string>
 #include <vector>
 
@@ -12,7 +17,12 @@
 
 namespace po = boost::program_options;
 
+using boost::asio::ip::resolver_query_base;
+using boost::asio::ssl::context;
+
 int main(int argc, char **argv) {
+  google::InitGoogleLogging(argv[0]);
+
   int port;
   unsigned int interval;
   bool use_ssl = false;
@@ -99,9 +109,21 @@ int main(int argc, char **argv) {
 
   channels = vm["channels"].as<std::vector<std::string> >();
 
-  drakebot::IRCRobot robot(io_service, quotations_file);
-  robot.Connect(host, port, use_ssl);
-  robot.Authenticate(nick, password, "user");
+  drakebot::InitializeRNG();
+
+  // initiate the name resolution
+  std::stringstream numeric_port;
+  numeric_port << port;
+  boost::asio::ip::tcp::resolver resolver(io_service);
+  boost::asio::ip::tcp::resolver::query query(host, numeric_port.str(), resolver_query_base::numeric_service);
+  boost::asio::ip::tcp::resolver::iterator iterator = resolver.resolve(query);
+
+  // set the SSL context
+  context ctx(boost::asio::ssl::context::sslv23);
+  ctx.set_default_verify_paths();
+
+  drakebot::IRCRobot robot(io_service, ctx, quotations_file, interval, nick,
+                           password);
 
   std::vector<std::string>::iterator it;
   for (it = channels.begin(); it != channels.end(); ++it) {
@@ -110,16 +132,11 @@ int main(int argc, char **argv) {
       continue;
     if (channel[0] != '#')
       channel.insert(0, "#");
-    robot.JoinChannel(channel);
+    robot.AddChannel(channel);
   }
 
-  drakebot::InitializeRNG();
-  while (true) {
-    unsigned int wait_time = robot.PickWaitTime(interval);
-    boost::asio::deadline_timer t(io_service,
-                                  boost::posix_time::seconds(wait_time));
-    t.wait();
-    robot.SendQuotation();
-  }
+  robot.Connect(iterator);
+  io_service.run();
+
   return 0;
 }
