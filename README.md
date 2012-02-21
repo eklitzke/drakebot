@@ -5,8 +5,8 @@ like this:
 
     gyp --depth=. drakebot.gyp
 
-Then run `make` as usual. Your binary will (probably) be located at
-`./out/Default/drakebot`.
+Then run `make drakebot` (or `make drakebot_opt`). Your binary will (probably)
+be located at `./out/Default/drakebot`.
 
 You'll need the following libraries installed to successfully build:
 

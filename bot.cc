@@ -39,10 +39,10 @@ IRCRobot::IRCRobot(boost::asio::io_service &service,
                    unsigned int interval,
                    const std::string &nick,
                    const std::string &password)
-    :io_service_(service), timer_(service), quotations_file_(quotations_file),
-     socket_(service, context), rand_(rng, uniform), nick_(nick),
-     password_(password), state_(SEND_PASS), interval_(interval),
-     line_reader_(&socket_, boost::bind(&IRCRobot::LineCallback, this, _1)) {
+    :io_service_(service), timer_(service), socket_(service, context),
+       quotations_file_(quotations_file), nick_(nick), password_(password),
+       interval_(interval), state_(SEND_PASS), rand_(rng, uniform),
+       line_reader_(&socket_, boost::bind(&IRCRobot::LineCallback, this, _1)) {
   reply_ = new char[MAX_LENGTH];
   request_ = new char[MAX_LENGTH];
   memset(static_cast<void *>(reply_), 0, sizeof(reply_));
@@ -152,6 +152,8 @@ void IRCRobot::HandleWrite(const boost::system::error_code& error,
       state_ = SEND_QUOTATIONS;
       waiting_ = false;
       break;
+    case SEND_QUOTATIONS:
+	  break;
   }
 
   if (!waiting_ && state_ == SEND_QUOTATIONS) {

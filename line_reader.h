@@ -14,13 +14,14 @@
 #include <string>
 
 //DEFINE_int32(read_buffer_size, 8096, "Size of the internal read buffer");
-const int FLAGS_read_buffer_size = 8096;
 
 typedef boost::asio::ssl::stream<boost::asio::ip::tcp::socket> ssl_socket;
 typedef boost::function<void (const std::string &)> callback;
 using boost::asio::ip::tcp;
 
 namespace drakebot {
+
+const size_t FLAGS_read_buffer_size = 8096;
 
 template<typename AsyncReadStream>
 class LineReader {
@@ -38,7 +39,7 @@ class LineReader {
   char *read_buf_;
 
   bool ReadCompletedTest(const boost::system::error_code&, size_t);
-  bool HandleRead(const boost::system::error_code&, size_t);
+  void HandleRead(const boost::system::error_code&, size_t);
 
   void EstablishReadHandler();
 };
@@ -99,7 +100,7 @@ bool LineReader<AsyncReadStream>::ReadCompletedTest(
 }
 
 template<typename AsyncReadStream>
-bool LineReader<AsyncReadStream>::HandleRead(
+void LineReader<AsyncReadStream>::HandleRead(
     const boost::system::error_code &error, size_t bytes_transferred) {
   if (error) {
     LOG(FATAL) << "read error: " << error;

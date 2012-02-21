@@ -46,23 +46,24 @@ class IRCRobot {
   void AddChannel(const std::string &);
 
  private:
+  boost::asio::io_service &io_service_;
+  boost::asio::deadline_timer timer_;
+  ssl_socket socket_;
+
   const std::string quotations_file_;
   const std::string nick_;
   const std::string password_;
   const unsigned int interval_;
-  boost::asio::io_service &io_service_;
-  boost::asio::deadline_timer timer_;
-
-  LineReader<ssl_socket> line_reader_;
-
-  bool waiting_;
-  ssl_socket socket_;
-  std::vector<std::string> channels_;
-  char *reply_;
-  char *request_;
   SendState state_;
 
   boost::variate_generator<boost::mt19937&, boost::uniform_real<double> > rand_;
+  LineReader<ssl_socket> line_reader_;
+
+  bool waiting_;
+  std::vector<std::string> channels_;
+  char *reply_;
+  char *request_;
+
 
   void HandleConnect(const boost::system::error_code&, tcp::resolver::iterator);
   void HandleHandshake(const boost::system::error_code&);
