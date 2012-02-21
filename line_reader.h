@@ -8,27 +8,28 @@
 
 #include <boost/asio.hpp>
 #include <boost/asio/ssl.hpp>
+#include <boost/function.hpp>
 
 #include <glog/logging.h>
 
 typedef boost::asio::ssl::stream<boost::asio::ip::tcp::socket> ssl_socket;
-typedef int(*callback)(const boost::system::error_code&, size_t);
+typedef boost::function<void (const std::string &)> callback;
 using boost::asio::ip::tcp;
 
 namespace drakebot {
 
 enum { READ_BUF_SIZE = 8096 };
 
-template<typename AsyncReadStream, typename Callback>
+template<typename AsyncReadStream>
 class LineReader {
  public:
-  LineReader(AsyncReadStream *stream, Callback cb);
+  LineReader(AsyncReadStream *stream, callback cb);
   ~LineReader();
   void Start();
   void Stop();
  private:
   AsyncReadStream *stream_;
-  Callback callback_;
+  callback callback_;
   bool keep_going_;
   std::string extra_;
 
@@ -40,37 +41,37 @@ class LineReader {
   void EstablishReadHandler();
 };
 
-template<typename AsyncReadStream, typename Callback>
-LineReader<AsyncReadStream, Callback>::LineReader(AsyncReadStream *stream, Callback cb)
+template<typename AsyncReadStream>
+LineReader<AsyncReadStream>::LineReader(AsyncReadStream *stream, callback cb)
     :stream_(stream), callback_(cb), keep_going_(false) {
   read_buf_ = new char[READ_BUF_SIZE];
 }
 
-template<typename AsyncReadStream, typename Callback>
-LineReader<AsyncReadStream, Callback>::~LineReader() {
+template<typename AsyncReadStream>
+LineReader<AsyncReadStream>::~LineReader() {
   delete read_buf_;
 }
 
-template<typename AsyncReadStream, typename Callback>
-void LineReader<AsyncReadStream, Callback>::Start() {
+template<typename AsyncReadStream>
+void LineReader<AsyncReadStream>::Start() {
   keep_going_ = true;
   EstablishReadHandler();
 }
 
-template<typename AsyncReadStream, typename Callback>
-void LineReader<AsyncReadStream, Callback>::EstablishReadHandler() {
+template<typename AsyncReadStream>
+void LineReader<AsyncReadStream>::EstablishReadHandler() {
   boost::asio::async_read(stream_,
                           boost::asio::buffer(read_buf_, READ_BUF_SIZE),
-                          boost::bind(&LineReader<AsyncReadStream, Callback>::ReadCompletedTest, this,
+                          boost::bind(&LineReader<AsyncReadStream>::ReadCompletedTest, this,
                                       boost::asio::placeholders::error,
                                       boost::asio::placeholders::bytes_transferred),
-                          boost::bind(&LineReader<AsyncReadStream, Callback>::HandleRead, this,
+                          boost::bind(&LineReader<AsyncReadStream>::HandleRead, this,
                                       boost::asio::placeholders::error,
                                       boost::asio::placeholders::bytes_transferred));
 }
 
-template<typename AsyncReadStream, typename Callback>
-bool LineReader<AsyncReadStream, Callback>::ReadCompletedTest(
+template<typename AsyncReadStream>
+bool LineReader<AsyncReadStream>::ReadCompletedTest(
     const boost::system::error_code &error, size_t bytes_transferred) {
 
   if (error) {
@@ -93,8 +94,8 @@ bool LineReader<AsyncReadStream, Callback>::ReadCompletedTest(
   return true;
 }
 
-template<typename AsyncReadStream, typename Callback>
-bool LineReader<AsyncReadStream, Callback>::HandleRead(
+template<typename AsyncReadStream>
+bool LineReader<AsyncReadStream>::HandleRead(
     const boost::system::error_code &error, size_t bytes_transferred) {
   if (error) {
     LOG(FATAL) << "read error: " << error;
@@ -121,9 +122,6 @@ bool LineReader<AsyncReadStream, Callback>::HandleRead(
   if (keep_going_)
     EstablishReadHandler();
 }
-
-
-
 
 }
 

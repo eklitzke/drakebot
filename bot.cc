@@ -42,7 +42,7 @@ IRCRobot::IRCRobot(boost::asio::io_service &service,
     :io_service_(service), timer_(service), quotations_file_(quotations_file),
      socket_(service, context), rand_(rng, uniform), nick_(nick),
      password_(password), state_(SEND_PASS), interval_(interval),
-     line_reader_(socket_, boost::bind(&IRCRobot::LineCallback, this))
+     line_reader_(&socket_, boost::bind(&IRCRobot::LineCallback, this, _1))
 {
   reply_ = new char[MAX_LENGTH];
   request_ = new char[MAX_LENGTH];
