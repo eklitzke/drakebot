@@ -133,7 +133,7 @@ bool IRCRobot::ReadCompletedTest(const boost::system::error_code& error,
   } else if (bytes_transferred == 0) {
     return false;
   }
-  return memchr(reply_, '\n', MAX_LENGTH) != NULL;
+  return memrchr(reply_, '\n', bytes_transferred) != NULL;
 }
 
 void IRCRobot::HandleRead(const boost::system::error_code& error,
