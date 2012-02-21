@@ -42,8 +42,7 @@ IRCRobot::IRCRobot(boost::asio::io_service &service,
     :io_service_(service), timer_(service), quotations_file_(quotations_file),
      socket_(service, context), rand_(rng, uniform), nick_(nick),
      password_(password), state_(SEND_PASS), interval_(interval),
-     line_reader_(&socket_, boost::bind(&IRCRobot::LineCallback, this, _1))
-{
+     line_reader_(&socket_, boost::bind(&IRCRobot::LineCallback, this, _1)) {
   reply_ = new char[MAX_LENGTH];
   request_ = new char[MAX_LENGTH];
   memset(static_cast<void *>(reply_), 0, sizeof(reply_));
@@ -57,7 +56,6 @@ IRCRobot::~IRCRobot() {
 
 void IRCRobot::Connect(boost::asio::ip::tcp::resolver::iterator
                        endpoint_iterator) {
-
   boost::asio::ip::tcp::endpoint endpoint = *endpoint_iterator;
   socket_.lowest_layer().async_connect(
       endpoint,
@@ -109,9 +107,10 @@ void IRCRobot::SendLine(const std::string &msg) {
   request_[msg.size()] = '\n';
   boost::asio::async_write(socket_,
                            boost::asio::buffer(request_, msg.size() + 1),
-                           boost::bind(&IRCRobot::HandleWrite, this,
-                                       boost::asio::placeholders::error,
-                                       boost::asio::placeholders::bytes_transferred));
+                           boost::bind(
+                               &IRCRobot::HandleWrite, this,
+                               boost::asio::placeholders::error,
+                               boost::asio::placeholders::bytes_transferred));
 }
 
 void IRCRobot::LineCallback(const std::string &line) {
@@ -158,9 +157,10 @@ void IRCRobot::HandleWrite(const boost::system::error_code& error,
   if (!waiting_ && state_ == SEND_QUOTATIONS) {
     waiting_ = true;
     unsigned int wait_time = PickWaitTime();
-    DLOG(INFO) << "Scheduling next quotation for " << wait_time << " seconds from now";
+    DLOG(INFO) << "Scheduling next quotation for " << wait_time <<
+        " seconds from now";
     timer_.expires_from_now(boost::posix_time::seconds(wait_time));
-    timer_.async_wait(boost::bind(&IRCRobot::HandleTimeout, this, 
+    timer_.async_wait(boost::bind(&IRCRobot::HandleTimeout, this,
                                   boost::asio::placeholders::error));
   }
 }
@@ -258,4 +258,3 @@ unsigned int IRCRobot::PickWaitTime() {
   return static_cast<unsigned int>(davg * (0.5 + rand_()));
 }
 }
-

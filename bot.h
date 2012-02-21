@@ -4,13 +4,13 @@
 #ifndef BOT_H_
 #define BOT_H_
 
-#include <string>
-#include <vector>
-
 #include <boost/asio.hpp>
 #include <boost/asio/ssl.hpp>
 #include <boost/bind.hpp>
 #include <boost/random.hpp>
+
+#include <string>
+#include <vector>
 
 #include "./line_reader.h"
 

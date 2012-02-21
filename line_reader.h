@@ -4,13 +4,13 @@
 #ifndef LINE_READER_H_
 #define LINE_READER_H_
 
-#include <string>
-
 #include <boost/asio.hpp>
 #include <boost/asio/ssl.hpp>
 #include <boost/function.hpp>
 
 #include <glog/logging.h>
+
+#include <string>
 
 typedef boost::asio::ssl::stream<boost::asio::ip::tcp::socket> ssl_socket;
 typedef boost::function<void (const std::string &)> callback;
@@ -62,12 +62,14 @@ template<typename AsyncReadStream>
 void LineReader<AsyncReadStream>::EstablishReadHandler() {
   boost::asio::async_read(*stream_,
                           boost::asio::buffer(read_buf_, READ_BUF_SIZE),
-                          boost::bind(&LineReader<AsyncReadStream>::ReadCompletedTest, this,
-                                      boost::asio::placeholders::error,
-                                      boost::asio::placeholders::bytes_transferred),
-                          boost::bind(&LineReader<AsyncReadStream>::HandleRead, this,
-                                      boost::asio::placeholders::error,
-                                      boost::asio::placeholders::bytes_transferred));
+                          boost::bind(
+                              &LineReader<AsyncReadStream>::ReadCompletedTest,
+                              this, boost::asio::placeholders::error,
+                              boost::asio::placeholders::bytes_transferred),
+                          boost::bind(
+                              &LineReader<AsyncReadStream>::HandleRead,
+                              this, boost::asio::placeholders::error,
+                              boost::asio::placeholders::bytes_transferred));
 }
 
 template<typename AsyncReadStream>
@@ -118,11 +120,10 @@ bool LineReader<AsyncReadStream>::HandleRead(
       break;
     }
   }
-  
+
   if (keep_going_)
     EstablishReadHandler();
 }
-
 }
 
-#endif // LINE_READER_H_
+#endif  // LINE_READER_H_

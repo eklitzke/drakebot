@@ -115,7 +115,8 @@ int main(int argc, char **argv) {
   std::stringstream numeric_port;
   numeric_port << port;
   boost::asio::ip::tcp::resolver resolver(io_service);
-  boost::asio::ip::tcp::resolver::query query(host, numeric_port.str(), resolver_query_base::numeric_service);
+  boost::asio::ip::tcp::resolver::query query(
+      host, numeric_port.str(), resolver_query_base::numeric_service);
   boost::asio::ip::tcp::resolver::iterator iterator = resolver.resolve(query);
 
   // set the SSL context
