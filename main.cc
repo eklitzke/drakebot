@@ -9,6 +9,7 @@
 #include <gflags/gflags.h>
 #include <glog/logging.h>
 
+#include <cstdlib>
 #include <fstream>
 #include <string>
 #include <vector>
@@ -19,7 +20,7 @@
 using boost::asio::ip::resolver_query_base;
 using boost::asio::ssl::context;
 
-DEFINE_bool(daemon, true, "Run as a daemon");
+DEFINE_bool(daemon, false, "Run as a daemon");
 DEFINE_string(host, "irc.freenode.net", "Host to connect to");
 DEFINE_int32(port, 6697, "Port to connect to");
 DEFINE_string(password, "", "Password to use");
@@ -41,6 +42,15 @@ int main(int argc, char **argv) {
     printf("Sorry, right now only --ssl is supported\n");
     return 1;
   }
+
+  char *real_path_name = realpath(FLAGS_quotations.c_str(), NULL);
+  if (real_path_name == NULL) {
+	printf("Failed to resolve path to quotations file, \"%s\"\n",
+		   FLAGS_quotations.c_str());
+	return 1;
+  }
+  std::string quotations_path(real_path_name, strlen(real_path_name));
+  free(real_path_name);
 
   boost::asio::io_service io_service;
 
@@ -91,8 +101,8 @@ int main(int argc, char **argv) {
   context ctx(boost::asio::ssl::context::sslv23);
   ctx.set_default_verify_paths();
 
-  drakebot::IRCRobot robot(io_service, ctx, FLAGS_quotations, FLAGS_interval, FLAGS_nick,
-                           FLAGS_password);
+  drakebot::IRCRobot robot(io_service, ctx, quotations_path, FLAGS_interval,
+						   FLAGS_nick, FLAGS_password);
 
   std::vector<std::string>::iterator it;
   std::string channel_name = FLAGS_channel;
