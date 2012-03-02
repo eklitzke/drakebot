@@ -12,8 +12,6 @@
 #include <string>
 #include <vector>
 
-#include "./line_reader.h"
-
 typedef boost::asio::ssl::stream<boost::asio::ip::tcp::socket> ssl_socket;
 using boost::asio::ip::tcp;
 
@@ -57,26 +55,23 @@ class IRCRobot {
   SendState state_;
 
   boost::variate_generator<boost::mt19937&, boost::uniform_real<double> > rand_;
-  LineReader<ssl_socket> line_reader_;
 
   bool waiting_;
   std::vector<std::string> channels_;
   char *reply_;
-  char *request_;
-
+  boost::asio::streambuf request_;
 
   void HandleConnect(const boost::system::error_code&, tcp::resolver::iterator);
   void HandleHandshake(const boost::system::error_code&);
   void HandleWrite(const boost::system::error_code&, size_t);
   void HandleTimeout(const boost::system::error_code&);
+  void HandleRead(const boost::system::error_code &, size_t);
 
   void SendLine(const std::string &);
   unsigned int PickWaitTime();
   bool SendMessage(const std::string &);
   bool SendQuotation();
   void JoinChannels();
-
-  void LineCallback(const std::string &);
 
   std::string GetQuotation();
 };

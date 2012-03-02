@@ -13,9 +13,7 @@
 #include <cassert>
 #include <ctime>
 #include <fstream>
-#include <sstream>
-
-#include "./line_reader.h"
+#include <iterator>
 
 using boost::asio::ssl::context;
 using boost::asio::ip::tcp;
@@ -41,16 +39,12 @@ IRCRobot::IRCRobot(boost::asio::io_service &service,
                    const std::string &password)
     :io_service_(service), timer_(service), socket_(service, context),
        quotations_file_(quotations_file), nick_(nick), password_(password),
-       interval_(interval), state_(SEND_PASS), rand_(rng, uniform),
-       line_reader_(&socket_, boost::bind(&IRCRobot::LineCallback, this, _1)) {
+       interval_(interval), state_(SEND_PASS), rand_(rng, uniform) {
   reply_ = new char[MAX_LENGTH];
-  request_ = new char[MAX_LENGTH];
   memset(static_cast<void *>(reply_), 0, sizeof(reply_));
-  memset(static_cast<void *>(request_), 0, sizeof(request_));
 }
 
 IRCRobot::~IRCRobot() {
-  delete request_;
   delete reply_;
 }
 
@@ -95,7 +89,12 @@ void IRCRobot::HandleHandshake(const boost::system::error_code& error) {
       s.append(nick_);
       SendLine(s);
     }
-    line_reader_.Start();
+    boost::asio::async_read_until(
+        socket_, request_, '\n',
+        boost::bind(
+            &IRCRobot::HandleRead, this,
+            boost::asio::placeholders::error,
+            boost::asio::placeholders::bytes_transferred));
   } else {
     LOG(FATAL) << "Handshake failed: " << error;
   }
@@ -103,17 +102,21 @@ void IRCRobot::HandleHandshake(const boost::system::error_code& error) {
 
 void IRCRobot::SendLine(const std::string &msg) {
   assert(msg.size() < MAX_LENGTH);
-  memcpy(request_, msg.c_str(), msg.size());
-  request_[msg.size()] = '\n';
+  memcpy(reply_, msg.c_str(), msg.size());
+  reply_[msg.size()] = '\n';
   boost::asio::async_write(socket_,
-                           boost::asio::buffer(request_, msg.size() + 1),
+                           boost::asio::buffer(reply_, msg.size() + 1),
                            boost::bind(
                                &IRCRobot::HandleWrite, this,
                                boost::asio::placeholders::error,
                                boost::asio::placeholders::bytes_transferred));
 }
 
-void IRCRobot::LineCallback(const std::string &line) {
+void IRCRobot::HandleRead(const boost::system::error_code &error,
+                          size_t bytes_transferred) {
+  std::string line(
+      (std::istreambuf_iterator<char>(&request_)),
+      std::istreambuf_iterator<char>());
   DLOG(INFO) << "Saw line " << line;
   if (line.substr(0, 5) == "PING ") {
     std::string::size_type colon_pos = line.find(":");
@@ -153,7 +156,7 @@ void IRCRobot::HandleWrite(const boost::system::error_code& error,
       waiting_ = false;
       break;
     case SEND_QUOTATIONS:
-	  break;
+      break;
   }
 
   if (!waiting_ && state_ == SEND_QUOTATIONS) {

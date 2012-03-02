@@ -15,7 +15,6 @@
 #include <vector>
 
 #include "./bot.h"
-#include "./line_reader.h"
 
 using boost::asio::ip::resolver_query_base;
 using boost::asio::ssl::context;
