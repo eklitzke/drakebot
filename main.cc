@@ -5,12 +5,12 @@
 #include <syslog.h>
 
 #include <boost/asio/ssl.hpp>
+#include <boost/lexical_cast.hpp>
 
 #include <gflags/gflags.h>
 #include <glog/logging.h>
 
 #include <cstdlib>
-#include <fstream>
 #include <string>
 #include <vector>
 
@@ -90,11 +90,10 @@ int main(int argc, char **argv) {
   drakebot::InitializeRNG();
 
   // initiate the name resolution
-  std::stringstream numeric_port;
-  numeric_port << FLAGS_port;
+  std::string str_port = boost::lexical_cast<std::string>(FLAGS_port);
   boost::asio::ip::tcp::resolver resolver(io_service);
   boost::asio::ip::tcp::resolver::query query(
-      FLAGS_host, numeric_port.str(), resolver_query_base::numeric_service);
+      FLAGS_host, str_port.c_str(), resolver_query_base::numeric_service);
   boost::asio::ip::tcp::resolver::iterator iterator = resolver.resolve(query);
 
   // set the SSL context
