@@ -29,7 +29,7 @@ boost::uniform_real<double> uniform(0.0, 1.0);
 
 void InitializeRNG() {
   struct timeval tv;
-  gettimeofday(&tv, NULL);
+  gettimeofday(&tv, nullptr);
   rng.seed(tv.tv_usec);
 }
 
@@ -116,7 +116,7 @@ void IRCRobot::SendLine(const std::string &msg) {
 void IRCRobot::LineCallback(const std::string &line) {
   DLOG(INFO) << "Saw line " << line;
   if (line.substr(0, 5) == "PING ") {
-    size_t colon_pos = line.find(":");
+    std::string::size_type colon_pos = line.find(":");
     assert(colon_pos != std::string::npos);
     std::string server_name = line.substr(colon_pos + 1, std::string::npos);
     std::string command = "PONG ";
@@ -182,9 +182,9 @@ bool IRCRobot::SendMessage(const std::string &msg) {
   std::vector<std::string>::iterator mit;
   std::vector<std::string> messages;
 
-  size_t pos = 0;
+  std::string::size_type pos = 0;
   while (true) {
-    size_t next = msg.find('\n', pos);
+    std::string::size_type next = msg.find('\n', pos);
     if (next == std::string::npos) {
       messages.push_back(msg.substr(pos, next));
       break;

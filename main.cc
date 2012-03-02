@@ -43,8 +43,8 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  char *real_path_name = realpath(FLAGS_quotations.c_str(), NULL);
-  if (real_path_name == NULL) {
+  char *real_path_name = realpath(FLAGS_quotations.c_str(), nullptr);
+  if (real_path_name == nullptr) {
 	printf("Failed to resolve path to quotations file, \"%s\"\n",
 		   FLAGS_quotations.c_str());
 	return 1;

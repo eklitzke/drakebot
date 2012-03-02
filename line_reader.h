@@ -88,7 +88,7 @@ bool LineReader<AsyncReadStream>::ReadCompletedTest(
   }
 
   void *offset = memrchr(read_buf_, '\n', bytes_transferred);
-  if (offset == NULL) {
+  if (offset == nullptr) {
     if (bytes_transferred == FLAGS_read_buffer_size) {
       LOG(FATAL) << "failed to buffer enough bytes";
       return true;
@@ -108,9 +108,9 @@ void LineReader<AsyncReadStream>::HandleRead(
 
   std::string data = extra_;
   data.append(read_buf_, bytes_transferred);
-  size_t offset = 0;
+  std::string::size_type offset = 0;
   while (true) {
-    size_t next = data.find('\n', offset);
+    std::string::size_type next = data.find('\n', offset);
     if (next == std::string::npos) {
       extra_ = data.substr(offset, data.size() - offset);
       break;
